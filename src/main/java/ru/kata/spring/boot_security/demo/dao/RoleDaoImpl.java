@@ -39,8 +39,9 @@ public class RoleDaoImpl implements RoleDao {
 	}
 
 	@Override
-	public Role getRoleById(Long id) {
-		return entityManager.find(Role.class, id);
+	@Transactional
+	public Optional<Role> getRoleById(Long id) {
+		return Optional.ofNullable(entityManager.find(Role.class, id));
 	}
 }
 

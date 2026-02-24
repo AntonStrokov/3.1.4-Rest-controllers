@@ -13,3 +13,42 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+
+logging:
+  level:
+    root: WARN
+    # Основное логирование приложения
+    ru.kata.spring.boot_security.demo: DEBUG
+    ru.kata.spring.boot_security.demo.service: DEBUG
+    ru.kata.spring.boot_security.demo.controller: DEBUG
+    ru.kata.spring.boot_security.demo.dao: DEBUG
+
+    # Spring Security логирование
+    org.springframework.security: DEBUG
+    org.springframework.security.access: DEBUG
+    org.springframework.security.authentication: DEBUG
+    org.springframework.security.web.FilterChainProxy: DEBUG
+    org.springframework.security.web.authentication: DEBUG
+
+    # Spring Web логирование
+    org.springframework.web.servlet.mvc.method.annotation.RequestResponseBodyMethodProcessor: DEBUG
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: DEBUG
+
+    # Hibernate логирование (опционально)
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%-12thread] %-5level %-40logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%-12thread] %-5level %-40logger{36} - %msg%n"
+
+  file:
+    name: logs/application.log
+    max-size: 10MB
+    max-history: 10
+
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 10
+      total-size-cap: 100MB

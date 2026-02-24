@@ -10,11 +10,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class MvcConfig implements WebMvcConfigurer {
 
-	private final RoleFormatter roleFormatter;
+	private final RoleConverter roleConverter;
 
 	@Override
 	public void addFormatters(FormatterRegistry registry) {
-		registry.addFormatter(roleFormatter);
+		registry.addConverter(roleConverter);
 	}
 
     public void addViewControllers(ViewControllerRegistry registry) {

@@ -37,7 +37,7 @@ public class User implements UserDetails {
 	@Max(value = 120, message = "Возраст не может быть больше 120")
 	private Integer age;
 
-	@NotBlank(message = "Пароль не может быть пустым")
+	@Column(nullable = false)
 	private String password;
 
 
