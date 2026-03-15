@@ -49,6 +49,7 @@ public class UserServiceImpl implements UserService {
 				.orElseThrow(() -> new EntityNotFoundException("User not found with id: " + user.getId()));
 
 		managedUser.setName(user.getName());
+		managedUser.setLastName(user.getLastName());
 		managedUser.setEmail(user.getEmail());
 		managedUser.setAge(user.getAge());
 
