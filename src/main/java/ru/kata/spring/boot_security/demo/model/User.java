@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import ru.kata.spring.boot_security.demo.validation.OnCreate;
 
 import javax.persistence.*;
 
@@ -41,10 +42,11 @@ public class User implements UserDetails {
 	@Max(value = 120, message = "Возраст не может быть больше 120")
 	private Integer age;
 
-	@Column(nullable = false)
+	@NotBlank(message = "Пароль обязателен", groups = OnCreate.class)
+	@Size(min = 3, max = 100, message = "Пароль должен быть от 6 до 100 символов", groups = OnCreate.class)
 	private String password;
 
-
+	@NotEmpty(message = "Должна быть выбрана хотя бы одна роль", groups = OnCreate.class)
 	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(
 			name = "users_roles",
