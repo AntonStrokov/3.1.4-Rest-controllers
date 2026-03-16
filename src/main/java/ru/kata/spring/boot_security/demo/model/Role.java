@@ -13,8 +13,7 @@ import javax.persistence.*;
 @Setter
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor // Полезно иметь
-@org.springframework.transaction.annotation.Transactional // Это тут не нужно, удали если есть
+@AllArgsConstructor
 public class Role implements GrantedAuthority {
 
 	@Id
@@ -28,7 +27,6 @@ public class Role implements GrantedAuthority {
 		this.id = id;
 	}
 
-	// Добавь эти методы (или используй @EqualsAndHashCode(onlyExplicitlyIncluded = true) на классе)
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;

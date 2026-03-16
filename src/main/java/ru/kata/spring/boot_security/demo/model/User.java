@@ -26,11 +26,13 @@ public class User implements UserDetails {
 	private Long id;
 
 	@NotBlank(message = "Имя не может быть пустым", groups = {OnCreate.class, OnUpdate.class, Default.class})
-	@Size(min = 2, max = 30, message = "Имя должно быть от 2 до 30 символов", groups = {OnCreate.class, OnUpdate.class, Default.class})
+	@Size(min = 2, max = 30, message = "Имя должно быть от 2 до 30 символов", groups = {OnCreate.class, OnUpdate.class,
+			Default.class})
 	private String name;
 
 	@NotBlank(message = "Фамилия не может быть пустой", groups = {OnCreate.class, OnUpdate.class, Default.class})
-	@Size(min = 2, max = 30, message = "Фамилия должна быть от 2 до 30 символов", groups = {OnCreate.class, OnUpdate.class, Default.class})
+	@Size(min = 2, max = 30, message = "Фамилия должна быть от 2 до 30 символов", groups = {OnCreate.class,
+			OnUpdate.class, Default.class})
 	private String lastName;
 
 	@NotBlank(message = "Email не может быть пустым", groups = {OnCreate.class, OnUpdate.class, Default.class})
@@ -38,8 +40,10 @@ public class User implements UserDetails {
 	private String email;
 
 	@NotNull(message = "Возраст обязателен", groups = {OnCreate.class, OnUpdate.class, Default.class})
-	@Min(value = 0, message = "Возраст не может быть отрицательным", groups = {OnCreate.class, OnUpdate.class, Default.class})
-	@Max(value = 120, message = "Возраст не может быть больше 120", groups = {OnCreate.class, OnUpdate.class, Default.class})
+	@Min(value = 0, message = "Возраст не может быть отрицательным", groups = {OnCreate.class, OnUpdate.class,
+			Default.class})
+	@Max(value = 120, message = "Возраст не может быть больше 120", groups = {OnCreate.class, OnUpdate.class,
+			Default.class})
 	private Integer age;
 
 	// Пароль обязателен только при создании (OnCreate)
@@ -56,7 +60,6 @@ public class User implements UserDetails {
 	)
 	private Set<Role> roles;
 
-	// --- Методы UserDetails ---
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -74,14 +77,22 @@ public class User implements UserDetails {
 	}
 
 	@Override
-	public boolean isAccountNonExpired() { return true; }
+	public boolean isAccountNonExpired() {
+		return true;
+	}
 
 	@Override
-	public boolean isAccountNonLocked() { return true; }
+	public boolean isAccountNonLocked() {
+		return true;
+	}
 
 	@Override
-	public boolean isCredentialsNonExpired() { return true; }
+	public boolean isCredentialsNonExpired() {
+		return true;
+	}
 
 	@Override
-	public boolean isEnabled() { return true; }
+	public boolean isEnabled() {
+		return true;
+	}
 }
