@@ -27,33 +27,26 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http
-				// 1. Убираем лишние permitAll. Оставляем только логин.
+				.csrf().ignoringAntMatchers("/api/**")
+				.and()
 				.authorizeRequests()
 				.antMatchers("/", "/login", "/error").permitAll()
-				// Все, что начинается на /admin — только для ADMIN
 				.antMatchers("/admin/**").hasRole("ADMIN")
-				// Страница /user — для обоих
 				.antMatchers("/user/**").hasAnyRole("USER", "ADMIN")
-				// Любой другой запрос (включая /error и /) — только после логина!
 				.anyRequest().authenticated()
 				.and()
-				// 2. Настройка формы логина
 				.formLogin()
-//				.loginPage("/login")
 				.successHandler(successUserHandler)
 				.permitAll()
 				.and()
-				// 3. Логаут
 				.logout()
 				.logoutUrl("/logout")
 				.logoutSuccessUrl("/login")
 				.permitAll();
 	}
 
-
 	@Override
 	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 		auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
 	}
-
 }

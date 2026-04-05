@@ -44,7 +44,7 @@
 
     <div class="content">
         <div class="tab-content" id="v-pills-tabContent">
-
+            <!-- Admin Tab -->
             <div class="tab-pane fade show active" id="v-pills-admin" role="tabpanel">
                 <h1 class="fw-bold">Admin panel</h1>
 
@@ -58,7 +58,7 @@
                 </ul>
 
                 <div class="tab-content border rounded-bottom bg-white shadow-sm" style="border-top: none;">
-
+                    <!-- Таблица пользователей -->
                     <div class="tab-pane fade show active" id="usersTable" role="tabpanel">
                         <div class="card-header border-bottom p-3">All users</div>
                         <div class="p-4">
@@ -75,57 +75,42 @@
                                     <th>Delete</th>
                                 </tr>
                                 </thead>
-                                <tbody>
-                                <tr th:each="user : ${users}">
-                                    <td th:text="${user.id}"></td>
-                                    <td th:text="${user.name}"></td>
-                                    <td th:text="${user.lastName}"></td>
-                                    <td th:text="${user.age}"></td>
-                                    <td th:text="${user.email}"></td>
-                                    <td>
-                                        <span th:each="roleName : ${#lists.sort(user.roles.![name])}"
-                                              th:text="${#strings.replace(roleName, 'ROLE_', '') + ' '}"></span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-info btn-sm text-white" data-bs-toggle="modal" th:data-bs-target="'#editModal' + ${user.id}">Edit</button>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" th:data-bs-target="'#deleteModal' + ${user.id}">Delete</button>
-                                    </td>
-                                </tr>
+                                <tbody id="usersTableRows">
+                                <!-- строки будут загружены через JS -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
+                    <!-- Форма создания нового пользователя -->
                     <div class="tab-pane fade" id="newUserTab" role="tabpanel">
                         <div class="card-header border-bottom p-3">Add new user</div>
                         <div class="p-4 d-flex justify-content-center">
                             <div class="centered-form-container">
-                                <form th:action="@{/admin/add}" th:object="${newUser}" method="post" novalidate>
+                                <form id="createUserForm" novalidate>
                                     <label class="form-label">First name</label>
-                                    <input type="text" class="form-control text-start" th:field="*{name}" th:errorclass="is-invalid">
-                                    <div class="invalid-feedback" th:errors="*{name}"></div>
+                                    <input type="text" class="form-control text-start" id="createName" required>
+                                    <div class="invalid-feedback">First name is required (2-30 chars)</div>
 
                                     <label class="form-label">Last name</label>
-                                    <input type="text" class="form-control text-start" th:field="*{lastName}" th:errorclass="is-invalid">
-                                    <div class="invalid-feedback" th:errors="*{lastName}"></div>
+                                    <input type="text" class="form-control text-start" id="createLastName" required>
+                                    <div class="invalid-feedback">Last name is required (2-30 chars)</div>
 
                                     <label class="form-label">Age</label>
-                                    <input type="number" class="form-control text-start" th:field="*{age}" th:errorclass="is-invalid" step="1">
-                                    <div class="invalid-feedback" th:errors="*{age}"></div>
+                                    <input type="number" class="form-control text-start" id="createAge" required min="0" max="120" step="1">
+                                    <div class="invalid-feedback">Age must be 0-120</div>
 
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-control text-start" th:field="*{email}" th:errorclass="is-invalid">
-                                    <div class="invalid-feedback" th:errors="*{email}"></div>
+                                    <input type="email" class="form-control text-start" id="createEmail" required>
+                                    <div class="invalid-feedback">Valid email required</div>
 
                                     <label class="form-label">Password</label>
-                                    <input type="password" class="form-control text-start" th:field="*{password}" th:errorclass="is-invalid">
-                                    <div class="invalid-feedback" th:errors="*{password}"></div>
+                                    <input type="password" class="form-control text-start" id="createPassword" required autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')">
+                                    <div class="invalid-feedback">Password required (min 3 chars)</div>
 
                                     <label class="form-label">Role</label>
-                                    <select class="form-select text-start" name="roleIds" multiple size="2">
-                                        <option th:each="role : ${allRoles}" th:value="${role.id}" th:text="${#strings.replace(role.name, 'ROLE_', '')}"></option>
+                                    <select class="form-select text-start" id="createRoles" multiple size="2">
+                                        <!-- заполнится через JS -->
                                     </select>
 
                                     <button type="submit" class="btn btn-success btn-lg mt-4 px-4 fw-bold">Add new user</button>
@@ -136,6 +121,7 @@
                 </div>
             </div>
 
+            <!-- User Tab (оставлен с Thymeleaf) -->
             <div class="tab-pane fade" id="v-pills-user" role="tabpanel">
                 <h1 class="fw-bold mb-4">User information-page</h1>
                 <div class="card rounded-0 shadow-sm border">
@@ -160,8 +146,8 @@
                                 <td th:text="${currentUser.age}"></td>
                                 <td th:text="${currentUser.email}"></td>
                                 <td>
-                                    <span th:each="roleName : ${#lists.sort(currentUser.roles.![name])}"
-                                          th:text="${#strings.replace(roleName, 'ROLE_', '') + ' '}"></span>
+                                        <span th:each="roleName : ${#lists.sort(currentUser.roles.![name])}"
+                                              th:text="${#strings.replace(roleName, 'ROLE_', '') + ' '}"></span>
                                 </td>
                             </tr>
                             </tbody>
@@ -173,120 +159,290 @@
     </div>
 </div>
 
-<div th:each="user : ${users}">
-    <div class="modal fade" th:id="'editModal' + ${user.id}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit user</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form th:action="@{/admin/update}" method="post" novalidate>
-                    <input type="hidden" name="id" th:value="${user.id}">
-                    <div class="modal-body text-center">
-                        <div class="centered-form-container">
-                            <label class="form-label">ID</label>
-                            <input type="text" class="form-control bg-light text-start" th:value="${user.id}" disabled>
-
-                            <label class="form-label">First name</label>
-                            <input type="text" class="form-control text-start" name="name"
-                                   th:value="${errorUser != null && errorUser.id == user.id ? errorUser.name : user.name}"
-                                   th:classappend="${errorUser != null && errorUser.id == user.id && #fields.hasErrors('user.name')} ? 'is-invalid' : ''">
-                            <div class="invalid-feedback" th:if="${errorUser != null && errorUser.id == user.id && #fields.hasErrors('user.name')}" th:errors="${user.name}"></div>
-
-                            <label class="form-label">Last name</label>
-                            <input type="text" class="form-control text-start" name="lastName"
-                                   th:value="${errorUser != null && errorUser.id == user.id ? errorUser.lastName : user.lastName}"
-                                   th:classappend="${errorUser != null && errorUser.id == user.id && #fields.hasErrors('user.lastName')} ? 'is-invalid' : ''">
-                            <div class="invalid-feedback" th:if="${errorUser != null && errorUser.id == user.id && #fields.hasErrors('user.lastName')}" th:errors="${user.lastName}"></div>
-
-                            <label class="form-label">Age</label>
-                            <input type="number" class="form-control text-start" name="age" step="1"
-                                   th:value="${errorUser != null && errorUser.id == user.id ? errorUser.age : user.age}"
-                                   th:classappend="${errorUser != null && errorUser.id == user.id && #fields.hasErrors('user.age')} ? 'is-invalid' : ''">
-                            <div class="invalid-feedback" th:if="${errorUser != null && errorUser.id == user.id && #fields.hasErrors('user.age')}" th:errors="${user.age}"></div>
-
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control text-start" name="email"
-                                   th:value="${errorUser != null && errorUser.id == user.id ? errorUser.email : user.email}"
-                                   th:classappend="${errorUser != null && errorUser.id == user.id && #fields.hasErrors('user.email')} ? 'is-invalid' : ''">
-                            <div class="invalid-feedback" th:if="${errorUser != null && errorUser.id == user.id && #fields.hasErrors('user.email')}" th:errors="${user.email}"></div>
-
-                            <label class="form-label">Password</label>
-                            <input type="password" class="form-control text-start" name="password">
-
-                            <label class="form-label">Role</label>
-                            <select class="form-select text-start" name="roleIds" multiple size="2">
-                                <option th:each="role : ${allRoles}" th:value="${role.id}" th:text="${#strings.replace(role.name, 'ROLE_', '')}" th:selected="${user.roles.contains(role)}"></option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Edit</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" th:id="'deleteModal' + ${user.id}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Delete user</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form th:action="@{/admin/delete}" method="post">
-                    <input type="hidden" name="id" th:value="${user.id}">
-                    <div class="modal-body text-center">
-                        <div class="centered-form-container">
-                            <label class="form-label">ID</label><input type="text" class="form-control bg-light text-start" th:value="${user.id}" disabled>
-                            <label class="form-label">First name</label><input type="text" class="form-control bg-light text-start" th:value="${user.name}" disabled>
-                            <label class="form-label">Last name</label><input type="text" class="form-control bg-light text-start" th:value="${user.lastName}" disabled>
-                            <label class="form-label">Age</label><input type="text" class="form-control bg-light text-start" th:value="${user.age}" disabled>
-                            <label class="form-label">Email</label><input type="text" class="form-control bg-light text-start" th:value="${user.email}" disabled>
-                            <label class="form-label">Role</label>
-                            <select class="form-select bg-light text-start" multiple disabled size="2">
-                                <option th:each="roleName : ${#lists.sort(user.roles.![name])}" th:text="${#strings.replace(roleName, 'ROLE_', '')}"></option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Контейнер для динамических модальных окон -->
+<div id="modalContainer"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script th:inline="javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        const activeTab = [[${activeTab}]];
-        if (activeTab === 'newuser') {
-            const tabEl = document.querySelector('#new-user-tab');
-            if (tabEl) new bootstrap.Tab(tabEl).show();
-        }
+<script>
+    let allRoles = [];
 
-        /*[# th:if="${errorUser != null}"]*/
-        const modalId = 'editModal' + [[${errorUser.id}]];
-        const modalElement = document.getElementById(modalId);
-        if (modalElement) {
-            const modal = new bootstrap.Modal(modalElement);
-            modal.show();
+    // Загрузка списка ролей
+    async function loadRoles() {
+        const response = await fetch('/api/admin/roles');
+        if (response.ok) {
+            allRoles = await response.json();
+            fillRoleSelect(document.getElementById('createRoles'));
         }
-        /*[/]*/
+    }
 
-        setTimeout(() => {
-            const form = document.querySelector('#newUserTab form');
-            if (form && activeTab !== 'newuser') {
-                form.querySelectorAll('input:not([type="hidden"])').forEach(i => { i.value = ''; i.defaultValue = ''; });
+    function fillRoleSelect(select) {
+        if (!select) return;
+        select.innerHTML = '';
+        allRoles.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role.id;
+            option.textContent = role.name.replace('ROLE_', '');
+            select.appendChild(option);
+        });
+    }
+
+    // Загрузка таблицы пользователей
+    async function loadUsers() {
+        const response = await fetch('/api/admin/users');
+        if (!response.ok) return;
+        const users = await response.json();
+        const tbody = document.getElementById('usersTableRows');
+        tbody.innerHTML = '';
+        users.forEach(user => {
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = user.id;
+            row.insertCell(1).textContent = user.name;
+            row.insertCell(2).textContent = user.lastName;
+            row.insertCell(3).textContent = user.age;
+            row.insertCell(4).textContent = user.email;
+            const rolesCell = row.insertCell(5);
+            rolesCell.textContent = user.roles.map(r => r.name.replace('ROLE_', '')).sort().join(' ');
+            const editCell = row.insertCell(6);
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'btn btn-info btn-sm text-white';
+            editBtn.onclick = () => showEditModal(user.id);
+            editCell.appendChild(editBtn);
+            const deleteCell = row.insertCell(7);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'btn btn-danger btn-sm';
+            deleteBtn.onclick = () => showDeleteModal(user.id);
+            deleteCell.appendChild(deleteBtn);
+        });
+    }
+
+    // Модальное окно редактирования
+    async function showEditModal(userId) {
+        const response = await fetch(`/api/admin/users/${userId}`);
+        if (!response.ok) return;
+        const user = await response.json();
+
+        const modalId = `editModal${userId}`;
+        const modalHtml = `
+            <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit user</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <div class="centered-form-container">
+                                <label class="form-label">ID</label>
+                                <input type="text" class="form-control bg-light text-start" value="${user.id}" disabled>
+                                <label class="form-label">First name</label>
+                                <input type="text" class="form-control text-start" id="editName${userId}" value="${escapeHtml(user.name)}" required>
+                                <label class="form-label">Last name</label>
+                                <input type="text" class="form-control text-start" id="editLastName${userId}" value="${escapeHtml(user.lastName)}" required>
+                                <label class="form-label">Age</label>
+                                <input type="number" class="form-control text-start" id="editAge${userId}" value="${user.age}" required min="0" max="120">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control text-start" id="editEmail${userId}" value="${escapeHtml(user.email)}" required>
+                                <label class="form-label">Password</label>
+                                <input type="password" class="form-control text-start" id="editPassword${userId}" placeholder="Leave blank to keep current" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly')">
+                                <label class="form-label">Role</label>
+                                <select class="form-select text-start" id="editRoles${userId}" multiple size="2"></select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="submitEdit(${userId})">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('modalContainer').insertAdjacentHTML('beforeend', modalHtml);
+        const select = document.getElementById(`editRoles${userId}`);
+        fillRoleSelect(select);
+        if (user.roles) {
+            const roleIds = user.roles.map(r => r.id);
+            Array.from(select.options).forEach(opt => {
+                if (roleIds.includes(Number(opt.value))) opt.selected = true;
+            });
+        }
+        const modal = new bootstrap.Modal(document.getElementById(modalId));
+        modal.show();
+        document.getElementById(modalId).addEventListener('hidden.bs.modal', () => document.getElementById(modalId).remove());
+    }
+
+    window.submitEdit = async (userId) => {
+        // Очищаем предыдущие ошибки
+        document.querySelectorAll(`.invalid-feedback`).forEach(el => el.remove());
+        document.querySelectorAll(`.is-invalid`).forEach(el => el.classList.remove('is-invalid'));
+
+        const name = document.getElementById(`editName${userId}`).value.trim();
+        const lastName = document.getElementById(`editLastName${userId}`).value.trim();
+        const age = parseInt(document.getElementById(`editAge${userId}`).value);
+        const email = document.getElementById(`editEmail${userId}`).value.trim();
+        const password = document.getElementById(`editPassword${userId}`).value;
+        const roleSelect = document.getElementById(`editRoles${userId}`);
+        const roleIds = Array.from(roleSelect.selectedOptions).map(opt => Number(opt.value));
+
+        const payload = { name, lastName, age, email, roleIds };
+        if (password) payload.password = password;
+
+        const response = await fetch(`/api/admin/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            bootstrap.Modal.getInstance(document.getElementById(`editModal${userId}`)).hide();
+            await loadUsers();
+        } else if (response.status === 400) {
+            const errors = await response.json();
+            // Показываем ошибки под каждым полем
+            for (const [field, message] of Object.entries(errors)) {
+                let inputId;
+                if (field === 'name') inputId = `editName${userId}`;
+                else if (field === 'lastName') inputId = `editLastName${userId}`;
+                else if (field === 'age') inputId = `editAge${userId}`;
+                else if (field === 'email') inputId = `editEmail${userId}`;
+                else if (field === 'password') inputId = `editPassword${userId}`;
+                else continue;
+
+                const input = document.getElementById(inputId);
+                input.classList.add('is-invalid');
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.style.display = 'block';
+                feedback.textContent = message;
+                input.parentNode.insertBefore(feedback, input.nextSibling);
             }
-        }, 100);
+        } else {
+            alert('Ошибка сервера');
+        }
+    };
+
+    // Модальное окно удаления
+    async function showDeleteModal(userId) {
+        const response = await fetch(`/api/admin/users/${userId}`);
+        if (!response.ok) return;
+        const user = await response.json();
+
+        const modalId = `deleteModal${userId}`;
+        const modalHtml = `
+            <div class="modal fade" id="${modalId}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Delete user</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <div class="centered-form-container">
+                                <label class="form-label">ID</label><input type="text" class="form-control bg-light text-start" value="${user.id}" disabled>
+                                <label class="form-label">First name</label><input type="text" class="form-control bg-light text-start" value="${escapeHtml(user.name)}" disabled>
+                                <label class="form-label">Last name</label><input type="text" class="form-control bg-light text-start" value="${escapeHtml(user.lastName)}" disabled>
+                                <label class="form-label">Age</label><input type="text" class="form-control bg-light text-start" value="${user.age}" disabled>
+                                <label class="form-label">Email</label><input type="text" class="form-control bg-light text-start" value="${escapeHtml(user.email)}" disabled>
+                                <label class="form-label">Role</label>
+                                <select class="form-select bg-light text-start" multiple disabled>
+                                    ${user.roles.map(r => `<option>${r.name.replace('ROLE_', '')}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-danger" onclick="confirmDelete(${userId})">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('modalContainer').insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById(modalId));
+        modal.show();
+        document.getElementById(modalId).addEventListener('hidden.bs.modal', () => document.getElementById(modalId).remove());
+    }
+
+    window.confirmDelete = async (userId) => {
+        const response = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' });
+        if (response.ok) {
+            await loadUsers();
+            const modalEl = document.getElementById(`deleteModal${userId}`);
+            if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+        } else {
+            alert('Error deleting user');
+        }
+    };
+
+    // Создание пользователя
+    document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Очищаем ошибки
+        document.querySelectorAll('#createUserForm .invalid-feedback').forEach(el => el.remove());
+        document.querySelectorAll('#createUserForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+        const name = document.getElementById('createName').value.trim();
+        const lastName = document.getElementById('createLastName').value.trim();
+        const age = parseInt(document.getElementById('createAge').value);
+        const email = document.getElementById('createEmail').value.trim();
+        const password = document.getElementById('createPassword').value;
+        const roleSelect = document.getElementById('createRoles');
+        const roleIds = Array.from(roleSelect.selectedOptions).map(opt => Number(opt.value));
+
+        const payload = { name, lastName, age, email, password, roleIds };
+
+        const response = await fetch('/api/admin/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            document.getElementById('createUserForm').reset();
+            document.querySelector('#table-tab').click();
+            await loadUsers();
+        } else if (response.status === 400) {
+            const errors = await response.json();
+            for (const [field, message] of Object.entries(errors)) {
+                let inputId;
+                if (field === 'name') inputId = 'createName';
+                else if (field === 'lastName') inputId = 'createLastName';
+                else if (field === 'age') inputId = 'createAge';
+                else if (field === 'email') inputId = 'createEmail';
+                else if (field === 'password') inputId = 'createPassword';
+                else continue;
+
+                const input = document.getElementById(inputId);
+                input.classList.add('is-invalid');
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.style.display = 'block';
+                feedback.textContent = message;
+                input.parentNode.insertBefore(feedback, input.nextSibling);
+            }
+        } else {
+            alert('Ошибка сервера');
+        }
     });
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Инициализация
+    async function init() {
+        await loadRoles();
+        await loadUsers();
+    }
+    init();
 </script>
 </body>
 </html>
