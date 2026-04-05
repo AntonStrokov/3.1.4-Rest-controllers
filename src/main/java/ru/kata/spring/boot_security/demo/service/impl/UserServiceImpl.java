@@ -5,12 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.kata.spring.boot_security.demo.dao.UserDao;
+import ru.kata.spring.boot_security.demo.exception.UserNotFoundException;
 import ru.kata.spring.boot_security.demo.model.User;
+import ru.kata.spring.boot_security.demo.repository.UserRepository;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,7 +20,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-	private final UserDao userDao;
+	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final RoleService roleService;
 
@@ -37,14 +37,15 @@ public class UserServiceImpl implements UserService {
 					.ifPresent(r -> user.setRoles(Set.of(r)));
 		}
 
-		userDao.addUser(user);
+		userRepository.save(user);
 	}
 
 	@Override
 	@Transactional
 	public void updateUser(User user, List<Long> roleIds) {
-		User managedUser = userDao.getUserById(user.getId())
-				.orElseThrow(() -> new EntityNotFoundException("User not found with id: " + user.getId()));
+
+		User managedUser = userRepository.findById(user.getId())
+				.orElseThrow(() -> new UserNotFoundException(user.getId()));
 
 		managedUser.setName(user.getName());
 		managedUser.setLastName(user.getLastName());
@@ -59,26 +60,28 @@ public class UserServiceImpl implements UserService {
 			managedUser.setRoles(new HashSet<>(roleService.getRolesByIds(roleIds)));
 		}
 
-		userDao.updateUser(managedUser);
+		userRepository.save(managedUser);
 	}
 
 	@Override
 	@Transactional
 	public void removeUser(Long id) {
-		userDao.removeUser(id);
+
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new UserNotFoundException(id));
+		userRepository.delete(user);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public User getUserById(Long id) {
-		return userDao.getUserById(id)
-				.orElseThrow(() -> new EntityNotFoundException("User not found with id: " + id));
+		return userRepository.findById(id)
+				.orElseThrow(() -> new UserNotFoundException(id));
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public List<User> getAllUsers() {
-
-		return userDao.getAllUsers();
+		return userRepository.findAll();
 	}
 }
