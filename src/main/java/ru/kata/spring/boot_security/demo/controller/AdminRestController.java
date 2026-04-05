@@ -1,6 +1,7 @@
 package ru.kata.spring.boot_security.demo.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -10,81 +11,74 @@ import ru.kata.spring.boot_security.demo.model.Role;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
+import ru.kata.spring.boot_security.demo.mapper.UserMapper;
 import ru.kata.spring.boot_security.demo.validation.OnCreate;
 import ru.kata.spring.boot_security.demo.validation.OnUpdate;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@Slf4j
 public class AdminRestController {
 
 	private final UserService userService;
 	private final RoleService roleService;
-
-	private UserDto convertToDto(User user) {
-		UserDto dto = new UserDto();
-		dto.setId(user.getId());
-		dto.setName(user.getName());
-		dto.setLastName(user.getLastName());
-		dto.setAge(user.getAge());
-		dto.setEmail(user.getEmail());
-		dto.setRoles(user.getRoles());
-		dto.setRoleIds(user.getRoles().stream().map(Role::getId).collect(Collectors.toList()));
-		return dto;
-	}
+	private final UserMapper userMapper;
 
 	@GetMapping("/users")
 	public ResponseEntity<List<UserDto>> getAllUsers() {
-		List<UserDto> users = userService.getAllUsers().stream()
-				.map(this::convertToDto)
-				.collect(Collectors.toList());
+		List<UserDto> users = userService.getAllUsers()
+				.stream()
+				.map(userMapper::toDto)
+				.toList();
 		return ResponseEntity.ok(users);
 	}
 
 	@GetMapping("/users/{id}")
 	public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
 		User user = userService.getUserById(id);
-		return ResponseEntity.ok(convertToDto(user));
-	}
-
-	@GetMapping("/roles")
-	public ResponseEntity<List<Role>> getAllRoles() {
-		return ResponseEntity.ok(roleService.getAllRoles());
+		return ResponseEntity.ok(userMapper.toDto(user));
 	}
 
 	@PostMapping("/users")
-	public ResponseEntity<?> createUser(@Validated(OnCreate.class) @RequestBody UserDto userDto) {
-		User user = new User();
-		user.setName(userDto.getName());
-		user.setLastName(userDto.getLastName());
-		user.setAge(userDto.getAge());
-		user.setEmail(userDto.getEmail());
+	public ResponseEntity<Void> createUser(
+			@Validated(OnCreate.class) @RequestBody UserDto userDto) {
+
+		User user = userMapper.toEntity(userDto);
 		user.setPassword(userDto.getPassword());
 		userService.addUser(user, userDto.getRoleIds());
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
 	@PutMapping("/users/{id}")
-	public ResponseEntity<?> updateUser(@PathVariable Long id,
-	                                    @Validated(OnUpdate.class) @RequestBody UserDto userDto) {
-		User existingUser = userService.getUserById(id);
-		existingUser.setName(userDto.getName());
-		existingUser.setLastName(userDto.getLastName());
-		existingUser.setAge(userDto.getAge());
-		existingUser.setEmail(userDto.getEmail());
-		if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
-			existingUser.setPassword(userDto.getPassword());
+	public ResponseEntity<Void> updateUser(
+			@PathVariable Long id,
+			@Validated(OnUpdate.class) @RequestBody UserDto userDto) {
+
+		User existing = userService.getUserById(id);
+		existing.setName(userDto.getName());
+		existing.setLastName(userDto.getLastName());
+		existing.setAge(userDto.getAge());
+		existing.setEmail(userDto.getEmail());
+
+		if (userDto.getPassword() != null && !userDto.getPassword().isBlank()) {
+			existing.setPassword(userDto.getPassword());
 		}
-		userService.updateUser(existingUser, userDto.getRoleIds());
+
+		userService.updateUser(existing, userDto.getRoleIds());
 		return ResponseEntity.ok().build();
 	}
 
 	@DeleteMapping("/users/{id}")
-	public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+	public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
 		userService.removeUser(id);
 		return ResponseEntity.noContent().build();
+	}
+
+	@GetMapping("/roles")
+	public ResponseEntity<List<Role>> getAllRoles() {
+		return ResponseEntity.ok(roleService.getAllRoles());
 	}
 }
