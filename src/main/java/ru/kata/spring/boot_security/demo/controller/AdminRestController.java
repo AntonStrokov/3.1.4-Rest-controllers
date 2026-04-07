@@ -8,10 +8,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.kata.spring.boot_security.demo.dto.UserDto;
 import ru.kata.spring.boot_security.demo.model.Role;
-import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
-import ru.kata.spring.boot_security.demo.mapper.UserMapper;
 import ru.kata.spring.boot_security.demo.validation.OnCreate;
 import ru.kata.spring.boot_security.demo.validation.OnUpdate;
 
@@ -25,30 +23,21 @@ public class AdminRestController {
 
 	private final UserService userService;
 	private final RoleService roleService;
-	private final UserMapper userMapper;
 
 	@GetMapping("/users")
 	public ResponseEntity<List<UserDto>> getAllUsers() {
-		List<UserDto> users = userService.getAllUsers()
-				.stream()
-				.map(userMapper::toDto)
-				.toList();
-		return ResponseEntity.ok(users);
+		return ResponseEntity.ok(userService.getAllUsersDto());
 	}
 
 	@GetMapping("/users/{id}")
 	public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
-		User user = userService.getUserById(id);
-		return ResponseEntity.ok(userMapper.toDto(user));
+		return ResponseEntity.ok(userService.getUserDtoById(id));
 	}
 
 	@PostMapping("/users")
 	public ResponseEntity<Void> createUser(
 			@Validated(OnCreate.class) @RequestBody UserDto userDto) {
-
-		User user = userMapper.toEntity(userDto);
-		user.setPassword(userDto.getPassword());
-		userService.addUser(user, userDto.getRoleIds());
+		userService.addUser(userDto);
 		return ResponseEntity.status(HttpStatus.CREATED).build();
 	}
 
@@ -56,18 +45,7 @@ public class AdminRestController {
 	public ResponseEntity<Void> updateUser(
 			@PathVariable Long id,
 			@Validated(OnUpdate.class) @RequestBody UserDto userDto) {
-
-		User existing = userService.getUserById(id);
-		existing.setName(userDto.getName());
-		existing.setLastName(userDto.getLastName());
-		existing.setAge(userDto.getAge());
-		existing.setEmail(userDto.getEmail());
-
-		if (userDto.getPassword() != null && !userDto.getPassword().isBlank()) {
-			existing.setPassword(userDto.getPassword());
-		}
-
-		userService.updateUser(existing, userDto.getRoleIds());
+		userService.updateUser(id, userDto);
 		return ResponseEntity.ok().build();
 	}
 

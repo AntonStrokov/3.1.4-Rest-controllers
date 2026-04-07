@@ -4,13 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+import ru.kata.spring.boot_security.demo.dto.UserDto;
 import ru.kata.spring.boot_security.demo.model.Role;
-import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.service.RoleService;
 import ru.kata.spring.boot_security.demo.service.UserService;
 
+import java.util.List;
 import java.util.Set;
 
 
@@ -20,7 +20,6 @@ public class DataInitializer {
 
 	private final RoleService roleService;
 	private final UserService userService;
-	private final PasswordEncoder passwordEncoder;
 
 	@Bean
 	@Transactional
@@ -38,7 +37,6 @@ public class DataInitializer {
 		};
 	}
 
-
 	private Role createRoleIfNotFound(String name) {
 		return roleService.getRoleByName(name)
 				.orElseGet(() -> {
@@ -48,27 +46,27 @@ public class DataInitializer {
 				});
 	}
 
-
 	private void createAdminIfNotFound(String name,
 	                                   String email,
 	                                   String rawPassword,
 	                                   Set<Role> roles) {
-		boolean adminExists = userService.getAllUsers()
+		boolean adminExists = userService.getAllUsersDto()
 				.stream()
 				.anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
 
 		if (!adminExists) {
-			User admin = new User();
-			admin.setName(name);
-			admin.setEmail(email);
-			admin.setAge(30);
-			admin.setPassword(passwordEncoder.encode(rawPassword));
-			admin.setRoles(roles);
+			UserDto adminDto = new UserDto();
+			adminDto.setName(name);
+			adminDto.setEmail(email);
+			adminDto.setAge(30);
+			adminDto.setPassword(rawPassword);
 
-			userService.addUser(admin,
-					roles.stream()
-							.map(Role::getId)
-							.toList());
+			List<Long> roleIds = roles.stream()
+					.map(Role::getId)
+					.toList();
+			adminDto.setRoleIds(roleIds);
+
+			userService.addUser(adminDto);
 		}
 	}
 }

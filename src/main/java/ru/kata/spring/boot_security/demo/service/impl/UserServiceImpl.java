@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.kata.spring.boot_security.demo.dto.UserDto;
 import ru.kata.spring.boot_security.demo.exception.UserNotFoundException;
+import ru.kata.spring.boot_security.demo.mapper.UserMapper;
 import ru.kata.spring.boot_security.demo.model.User;
 import ru.kata.spring.boot_security.demo.repository.UserRepository;
 import ru.kata.spring.boot_security.demo.service.RoleService;
@@ -23,14 +25,33 @@ public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final RoleService roleService;
+	private final UserMapper userMapper;
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<UserDto> getAllUsersDto() {
+		return userRepository.findAll().stream()
+				.map(userMapper::toDto)
+				.toList();
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public UserDto getUserDtoById(Long id) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new UserNotFoundException(id));
+		return userMapper.toDto(user);
+	}
 
 	@Override
 	@Transactional
-	public void addUser(User user, List<Long> roleIds) {
-		user.setPassword(passwordEncoder.encode(user.getPassword()));
+	public void addUser(UserDto userDto) {
+		User user = userMapper.toEntity(userDto);
 
-		if (roleIds != null && !roleIds.isEmpty()) {
-			user.setRoles(new HashSet<>(roleService.getRolesByIds(roleIds)));
+		user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+
+		if (userDto.getRoleIds() != null && !userDto.getRoleIds().isEmpty()) {
+			user.setRoles(new HashSet<>(roleService.getRolesByIds(userDto.getRoleIds())));
 		}
 		else {
 			roleService.getRoleByName("ROLE_USER")
@@ -42,22 +63,18 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public void updateUser(User user, List<Long> roleIds) {
+	public void updateUser(Long id, UserDto userDto) {
+		User managedUser = userRepository.findById(id)
+				.orElseThrow(() -> new UserNotFoundException(id));
 
-		User managedUser = userRepository.findById(user.getId())
-				.orElseThrow(() -> new UserNotFoundException(user.getId()));
+		userMapper.updateEntityFromDto(userDto, managedUser);
 
-		managedUser.setName(user.getName());
-		managedUser.setLastName(user.getLastName());
-		managedUser.setEmail(user.getEmail());
-		managedUser.setAge(user.getAge());
-
-		if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
-			managedUser.setPassword(passwordEncoder.encode(user.getPassword()));
+		if (userDto.getPassword() != null && !userDto.getPassword().isBlank()) {
+			managedUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
 		}
 
-		if (roleIds != null) {
-			managedUser.setRoles(new HashSet<>(roleService.getRolesByIds(roleIds)));
+		if (userDto.getRoleIds() != null) {
+			managedUser.setRoles(new HashSet<>(roleService.getRolesByIds(userDto.getRoleIds())));
 		}
 
 		userRepository.save(managedUser);
@@ -66,22 +83,8 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional
 	public void removeUser(Long id) {
-
-		User user = userRepository.findById(id)
-				.orElseThrow(() -> new UserNotFoundException(id));
-		userRepository.delete(user);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public User getUserById(Long id) {
-		return userRepository.findById(id)
-				.orElseThrow(() -> new UserNotFoundException(id));
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public List<User> getAllUsers() {
-		return userRepository.findAll();
+		if (userRepository.existsById(id)) {
+			userRepository.deleteById(id);
+		}
 	}
 }
