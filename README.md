@@ -1,184 +1,146 @@
 # Spring Boot Security Demo Application
 
 ## Описание проекта
+Spring Boot‑приложение с полной системой аутентификации и авторизации на основе ролей.  
+Показывает типичную цепочку Spring Security, работу с MySQL через JPA, UI‑страницы (Thymeleaf) и набор REST‑эндпоинтов для управления пользователями и ролями.
 
-Spring Boot приложение с системой аутентификации и авторизации на основе ролей. Приложение демонстрирует полный цикл работы Spring Security с использованием современных практик разработки.
+> **Что изменилось в этой версии**
+> - `UserDto` — поле `roleIds` удалено, пароль помечен  
+>   `@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)`.  
+> - Удалены все `raw‑type`‑ы; теперь используется типизация (`List<UserDto>`, `Optional<Role>` и т.п.).  
+> - Конфигурация безопасности полностью перенесена в `SecurityFilterChain`  
+>   (устаревший `WebSecurityConfigurerAdapter` удалён).
 
-## Архитектура приложения
+## Технологический стек
+- **Spring Boot 2.7.x** (Spring Security 5.7)  
+- **Spring Security** – аутентификация, авторизация, CSRF‑исключения  
+- **Spring Data JPA** – работа с MySQL  
+- **MySQL 8.x** – основной источник данных (см. `application.yml`)  
+- **Thymeleaf** – шаблонизатор UI  
+- **Maven** – управление зависимостями  
+- **Lombok** – уменьшает бойлерплейт  
+- **MapStruct** – маппинг `User ↔ UserDto`
 
-### Технологический стек
-- **Spring Boot 3.x** - основной фреймворк
-- **Spring Security** - безопасность и авторизация
-- **Spring Data JPA** - работа с базой данных
-- **MySQL Database** - embedded база данных для разработки
-- **Thymeleaf** - шаблонизатор для веб-интерфейса
-- **Maven** - управление зависимостями
+## Архитектура проекта
+src/main/java/ru/kata/spring/boot_security/demo/ ├─ SpringBootSecurityDemoApplication.java // точка входа ├─ configs/ │ ├─ WebSecurityConfig.java // SecurityFilterChain │ ├─ SuccessUserHandler.java // кастомный success‑handler │ └─ DataInitializer.java // стартовые данные ├─ controller/ │ ├─ AdminRestController.java // REST‑API админа │ └─ UserController.java // UI‑контроллер (user‑info) ├─ service/ │ ├─ UserService.java │ ├─ RoleService.java │ └─ impl/ │ ├─ UserServiceImpl.java │ └─ RoleServiceImpl.java ├─ mapper/ │ └─ UserMapper.java // MapStruct ├─ dto/ │ └─ UserDto.java // DTO без roleIds, пароль Write‑only ├─ model/ │ ├─ User.java │ └─ Role.java ├─ repository/ │ ├─ UserRepository.java // JpaRepository<User, Long> │ └─ RoleRepository.java // JpaRepository<Role, Long> ├─ exception/ │ ├─ UserNotFoundException.java │ └─ RestExceptionHandler.java // @RestControllerAdvice └─ aspect/ └─ LoggingAspect.java
 
-### Структура проекта
-
-```
-src/main/java/ru/kata/spring/boot_security/demo/
-├── SpringBootSecurityDemoApplication.java     # Главный класс приложения
-├── configs/                                   # Конфигурационные классы
-│   ├── WebSecurityConfig.java                 # Конфигурация безопасности
-│   ├── MvcConfig.java                         # MVC конфигурация
-│   ├── SuccessUserHandler.java               # Обработчик успешной аутентификации
-│   └── DataInitializer.java                  # Инициализация тестовых данных
-├── controller/                                # Контроллеры
-│   ├── AdminController.java                   # Административный функционал
-│   └── UserController.java                   # Пользовательский функционал
-├── service/                                   # Сервисный слой
-│   ├── UserService.java                      # Интерфейс сервиса пользователей
-│   ├── RoleService.java                      # Интерфейс сервиса ролей
-│   └── impl/                                 # Реализации сервисов
-│       ├── UserServiceImpl.java
-│       └── RoleServiceImpl.java
-├── dao/                                      # Data Access Object слой
-│   ├── UserDao.java                          # Интерфейс DAO пользователей
-│   ├── RoleDao.java                          # Интерфейс DAO ролей
-│   └── impl/                                 # Реализации DAO
-│       ├── UserDaoImpl.java
-│       └── RoleDaoImpl.java
-├── model/                                    # Модели данных
-│   ├── User.java                            # Сущность пользователя
-│   └── Role.java                            # Сущность роли
-├── aspect/                                   # Аспекты
-│   └── LoggingAspect.java                   # Логирование методов
-└── exception/                                # Обработка исключений
-    └── GlobalExceptionHandler.java          # Глобальный обработчик
-```
 
 ## Функциональные возможности
-
-### ✅ Аутентификация
-- Регистрация новых пользователей
-- Вход в систему по email и паролю
-- Безопасное хранение паролей (хеширование)
-
-### ✅ Авторизация
-- Ролевая модель доступа (ROLE_ADMIN, ROLE_USER)
-- Защита эндпоинтов на основе ролей
-- Динамическое управление правами доступа
-
-### ✅ Управление пользователями
-- Просмотр списка всех пользователей (для администраторов)
-- Редактирование данных пользователей
-- Управление ролями пользователей
-- Удаление пользователей
-
-### ✅ Административные функции
-- Полный доступ ко всем пользователям
-- Назначение и изменение ролей
-- Просмотр системной информации
+| Фича | Описание |
+|------|----------|
+| **Аутентификация** | Регистрация, вход по `email`/`password`, хранение пароля в виде BCrypt‑хеша. |
+| **Авторизация** | Роли `ROLE_ADMIN`, `ROLE_USER`; защита эндпоинтов через `hasRole`/`hasAnyRole`. |
+| **Управление пользователями** | Список, создание, редактирование, удаление (REST‑API). |
+| **Управление ролями** | Просмотр всех ролей, назначение ролей пользователям. |
+| **UI** | Главная, форма входа, регистрация, личный кабинет, админ‑панель. |
+| **REST‑API** | `/api/admin/users`, `/api/admin/roles` (см. ниже). |
 
 ## Как запустить приложение
 
-### Предварительные требования
-- Java 17 или выше
-- Maven 3.6 или выше
+### Требования
+- **JDK 17** или новее  
+- **Maven 3.6+**  
+- **MySQL** – создайте БД `crud_app_db` и пользователя `jpauser`/`jpauser`  
+  (в `application.yml` уже прописан URL с `allowPublicKeyRetrieval=true`).
 
-### Шаги запуска
+### Шаги
+```bash
+# 1. Клонировать репозиторий
+git clone https://github.com/AntonStrokov/3.1.4-Rest-controllers.git
+cd 3.1.4-Rest-controllers
 
-1. **Клонирование репозитория**
-   ```bash
-   git clone https://github.com/AntonStrokov/2.3.1-Spring-MVC-Hibernate/tree/spring-boot-version
-   cd PP_3_1_2_Boot_Security
-   ```
+# 2. Сборка проекта
+mvn clean install
 
-2. **Сборка проекта**
-   ```bash
-   mvn clean install
-   ```
+# 3. Запуск
+mvn spring-boot:run
+Приложение будет доступно по адресу http://localhost:8080.
 
-3. **Запуск приложения**
-   ```bash
-   mvn spring-boot:run
-   ```
+Тестовые пользователи (создаются автоматически)
+Пользователь	Email	Пароль	Роли
+admin	admin@example.com	admin	ROLE_ADMIN, ROLE_USER
+user	user@example.com	user	ROLE_USER
+API Endpoints
+Публичные
+GET / – главная страница
+GET /login – форма входа
+POST /login – обработка входа
+GET /registration – форма регистрации
+POST /registration – обработка регистрации
+Защищённые (требуется аутентификация)
+Endpoint	Метод	Описание
+/user	GET	Личный кабинет
+/admin	GET	Админ‑панель
+/admin/users	GET	Список всех пользователей (DTO)
+/admin/users/{id}	GET	Информация о пользователе
+/admin/users	POST	Создание нового пользователя
+/admin/users/{id}	PUT	Обновление пользователя (можно менять пароль, роли)
+/admin/users/{id}	DELETE	Удаление пользователя (идемпотентно)
+/admin/roles	GET	Список всех ролей
+Важно: поле password в UserDto не возвращается в ответах
+(аннотация @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) и
+UserMapper @Mapping(target = "password", ignore = true)).
 
-4. **Доступ к приложению**
-   - Приложение будет доступно по адресу: `http://localhost:8080`
-   - База данных H2 Console: `http://localhost:8080/h2-console`
-     - JDBC URL: `jdbc:h2:mem:testdb`
-     - User Name: `sa`
-     - Password: (пусто)
-
-## Тестовые данные
-
-При запуске приложения автоматически создаются тестовые пользователи:
-
-### Пользователи по умолчанию
-- **Администратор**
-  - Email: `admin@example.com`
-  - Пароль: `admin`
-  - Роли: `ROLE_ADMIN`, `ROLE_USER`
-
-- **Обычный пользователь**
-  - Email: `user@example.com`
-  - Пароль: `user`
-  - Роли: `ROLE_USER`
-
-## API Endpoints
-
-### Публичные endpoints
-- `GET /` - главная страница
-- `GET /login` - страница входа
-- `POST /login` - обработка входа
-- `GET /registration` - страница регистрации
-- `POST /registration` - обработка регистрации
-
-### Защищенные endpoints
-- `GET /user` - личный кабинет пользователя
-- `GET /admin` - панель администратора
-- `GET /admin/users` - список всех пользователей
-- `POST /admin/users/{id}` - редактирование пользователя
-- `DELETE /admin/users/{id}` - удаление пользователя
-
-## Настройки безопасности
-
-### Ролевая модель
-- **ROLE_ADMIN** - полный доступ ко всем функциям
-- **ROLE_USER** - доступ только к личному кабинету
-
-### Конфигурация безопасности
-```java
+Конфигурация безопасности (WebSecurityConfig.java)
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class WebSecurityConfig {
-    
+
+    private final CustomUserDetailsService userDetailsService;
+    private final SuccessUserHandler successUserHandler;
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/", "/login", "/registration").permitAll()
-                .anyRequest().authenticated()
+            // 1️⃣ CSRF‑исключения только для API‑эндпоинтов
+            .csrf(csrf -> csrf.ignoringAntMatchers("/api/**"))
+
+            // 2️⃣ Авторизация запросов
+            .authorizeRequests(auth -> auth
+                    .antMatchers("/", "/login", "/error").permitAll()
+                    .antMatchers("/api/**").permitAll()          // при необходимости ограничьте ролями
+                    .antMatchers("/admin/**").hasRole("ADMIN")
+                    .antMatchers("/user/**").hasAnyRole("USER", "ADMIN")
+                    .anyRequest().authenticated()
             )
+
+            // 3️⃣ Форма входа
             .formLogin(form -> form
-                .loginPage("/login")
-                .successHandler(successUserHandler())
-                .permitAll()
+                    .loginPage("/login")
+                    .successHandler(successUserHandler)
+                    .permitAll()
             )
+
+            // 4️⃣ Выход из системы
             .logout(logout -> logout
-                .logoutSuccessUrl("/login")
-                .permitAll()
+                    .logoutUrl("/logout")
+                    .logoutSuccessUrl("/login")
+                    .permitAll()
             );
+
         return http.build();
     }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return userDetailsService;
+    }
 }
-```
-
-## База данных
-
-### Схема данных
-```sql
+Схема базы данных
 -- Таблица пользователей
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(255),
-    last_name VARCHAR(255)
+    last_name VARCHAR(255),
+    age INT
 );
 
 -- Таблица ролей
@@ -187,7 +149,7 @@ CREATE TABLE roles (
     name VARCHAR(255) UNIQUE NOT NULL
 );
 
--- Связь многие-ко-многим пользователи-роли
+-- Связь многие‑ко‑многим: пользователь ↔ роль
 CREATE TABLE user_roles (
     user_id BIGINT,
     role_id BIGINT,
@@ -195,47 +157,21 @@ CREATE TABLE user_roles (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
-```
+Разработка
+Добавление новой функциональности
+Новая сущность – создайте модель в model/, репозиторий, сервис и контроллер.
+Новый endpoint – добавьте метод в нужный контроллер и, при необходимости, обновите правила в WebSecurityConfig.
+Новая роль – вставьте запись в таблицу roles и пропишите её в конфигурации доступа.
+Тестирование
+Рекомендуется добавить unit‑/integration‑тесты:
 
-## Разработка
-
-### Добавление новой функциональности
-
-1. **Новая сущность**
-   - Создать модель в пакете `model/`
-   - Создать DAO интерфейс и реализацию
-   - Создать сервисный интерфейс и реализацию
-   - Добавить контроллер
-
-2. **Новый endpoint**
-   - Добавить метод в существующий контроллер
-   - или создать новый контроллер
-   - Настроить безопасность в `WebSecurityConfig`
-
-3. **Новая роль**
-   - Добавить запись в таблицу `roles`
-   - Настроить доступ в конфигурации безопасности
-
-## Troubleshooting
-
-### Частые проблемы и решения
-
-1. **Ошибка доступа к базе данных**
-   - Проверить настройки в `application.properties`
-   - Убедиться, что H2 Console включена
-
-2. **Ошибка аутентификации**
-   - Проверить правильность email и пароля
-   - Убедиться, что пользователь существует в базе
-
-3. **Ошибка авторизации**
-   - Проверить назначенные роли пользователю
-   - Убедиться, что endpoint правильно настроен в SecurityConfig
-
-## Лицензия
-
-Этот проект создан для образовательных целей в рамках изучения Spring Security.
-
----
-
-*Последнее обновление: 08.03.2026
+UserServiceImpl – маппинг, хеширование пароля, назначение ролей.
+AdminRestController – валидация, статусы 200/400/404.
+SecurityFilterChain – проверка доступа к открытым и закрытым эндпоинтам.
+Частые проблемы и решения
+Проблема	Как решить
+Ошибка доступа к БД	Проверьте параметры в application.yml и наличие БД crud_app_db.
+Ошибка аутентификации	Убедитесь, что пользователь существует и пароль (BCrypt) совпадает.
+Ошибка авторизации	Проверьте, что у пользователя есть нужные роли и эндпоинт правильно сконфигурирован в WebSecurityConfig.
+Лицензия
+Проект распространяется под лицензией MIT.
