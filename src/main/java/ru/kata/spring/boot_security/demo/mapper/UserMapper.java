@@ -9,14 +9,16 @@ import ru.kata.spring.boot_security.demo.model.User;
 @Mapper(componentModel = "spring", imports = {java.util.stream.Collectors.class})
 public interface UserMapper {
 
+	@Mapping(target = "password", ignore = true)
 	UserDto toDto(User user);
 
 	@Mapping(target = "roles", ignore = true)
 	User toEntity(UserDto dto);
 
+
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "roles", ignore = true)
 	@Mapping(target = "password", ignore = true)
-	void updateEntityFromDto(UserDto dto, @MappingTarget User entity);
+	void updateEntityFromDto(UserDto dto,
+	                         @MappingTarget User entity);
 }
-

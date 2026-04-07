@@ -30,7 +30,8 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<UserDto> getAllUsersDto() {
-		return userRepository.findAll().stream()
+		return userRepository.findAll()
+				.stream()
 				.map(userMapper::toDto)
 				.toList();
 	}
@@ -47,13 +48,11 @@ public class UserServiceImpl implements UserService {
 	@Transactional
 	public void addUser(UserDto userDto) {
 		User user = userMapper.toEntity(userDto);
-
 		user.setPassword(passwordEncoder.encode(userDto.getPassword()));
 
 		if (userDto.getRoleIds() != null && !userDto.getRoleIds().isEmpty()) {
 			user.setRoles(new HashSet<>(roleService.getRolesByIds(userDto.getRoleIds())));
-		}
-		else {
+		} else {
 			roleService.getRoleByName("ROLE_USER")
 					.ifPresent(r -> user.setRoles(Set.of(r)));
 		}
